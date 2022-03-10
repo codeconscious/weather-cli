@@ -30,11 +30,11 @@ internal static class Program
         const string lon = "136.9066";
 
         var result = await _client.GetStringAsync($"https://api.openweathermap.org/data/2.5/onecall?lat={lat}&lon={lon}&units={_units}&appid={_apiKey}");
-
-        AnsiConsole.WriteLine("JSON data retrieved:");
-        // File.WriteAllText("forecast.json", result);
+        AnsiConsole.WriteLine("Response received.");
 
         var forecast = JsonSerializer.Deserialize<Forecast.Root>(result);
         AnsiConsole.WriteLine($"The current temperature is {forecast.Current.Temp} degrees, but it feels like {forecast.Current.FeelsLike} degrees.");
+        var time = DateTimeOffset.FromUnixTimeMilliseconds(forecast.Current.Dt);
+        AnsiConsole.WriteLine($"The time is {time.LocalDateTime}");
     }
 }
