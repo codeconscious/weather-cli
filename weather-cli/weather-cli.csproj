@@ -4,8 +4,14 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net6.0</TargetFramework>
     <RootNamespace>weather_cli</RootNamespace>
-    <ImplicitUsings>enable</ImplicitUsings>
+    <ImplicitUsings>disable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <None Remove="Spectre.Console" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Spectre.Console" Version="0.43.0" />
+  </ItemGroup>
 </Project>
