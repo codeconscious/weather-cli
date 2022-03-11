@@ -43,7 +43,7 @@ public class Forecast
 
     public record Minutely(
         [property: JsonPropertyName("dt")] int Dt,
-        [property: JsonPropertyName("precipitation")] int Precipitation
+        [property: JsonPropertyName("precipitation")] double Precipitation
     );
 
     public record Hourly(
@@ -60,7 +60,10 @@ public class Forecast
         [property: JsonPropertyName("wind_deg")] int WindDeg,
         [property: JsonPropertyName("wind_gust")] double WindGust,
         [property: JsonPropertyName("weather")] IReadOnlyList<Weather> Weather,
-        [property: JsonPropertyName("pop")] int Pop
+        /// <summary>
+        /// Probability of precipitation
+        /// </summary>
+        [property: JsonPropertyName("pop")] double Pop
     );
 
     public record Temp(
