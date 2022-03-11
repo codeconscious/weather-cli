@@ -13,7 +13,8 @@ public class Forecast
         [property: JsonPropertyName("current")] Current Current,
         [property: JsonPropertyName("minutely")] IReadOnlyList<Minutely> Minutely,
         [property: JsonPropertyName("hourly")] IReadOnlyList<Hourly> Hourly,
-        [property: JsonPropertyName("daily")] IReadOnlyList<Daily> Daily
+        [property: JsonPropertyName("daily")] IReadOnlyList<Daily> Daily,
+        [property: JsonPropertyName("alerts")] IReadOnlyList<Alert> Alerts
     );
 
     public record Weather(
@@ -102,5 +103,14 @@ public class Forecast
         [property: JsonPropertyName("pop")] double Pop,
         [property: JsonPropertyName("uvi")] double Uvi,
         [property: JsonPropertyName("rain")] double? Rain
+    );
+
+    public record Alert(
+        [property: JsonPropertyName("sender_name")] string SenderName,
+        [property: JsonPropertyName("event")] string Event,
+        [property: JsonPropertyName("start")] int Start,
+        [property: JsonPropertyName("end")] int End,
+        [property: JsonPropertyName("description")] string Description,
+        [property: JsonPropertyName("tags")] IReadOnlyList<string> Tags
     );
 }
