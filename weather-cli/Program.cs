@@ -46,13 +46,14 @@ internal static class Program
         table.AddColumn("Rain");
         table.AddColumn("Wind");
 
+        AnsiConsole.WriteLine($"Weather for {forecast.Lat}, {forecast.Lon}");
         AnsiConsole.WriteLine($"The current temperature is {forecast.Current.Temp} degrees, but it feels like {forecast.Current.FeelsLike} degrees.");
         foreach (var d in forecast.Daily)
         {
             var dateTime = DateTime.UnixEpoch.AddSeconds(d.Dt).ToShortDateString();
-            var temp = d.Temp.Min.ToString("0") + "-" + d.Temp.Max.ToString("0");
-            var rain = d.Rain?.ToString("0") ?? "--";
-            var wind = $"{d.WindSpeed} ({d.WindGust})";
+            var temp = d.Temp.Min.ToString("0") + " to " + d.Temp.Max.ToString("0");
+            var rain = d.Rain is null ? "--" : d.Rain.Value.ToString("0") + "%";
+            var wind = $"{d.WindSpeed:0} (up to {d.WindGust:0})";
 
             table.AddRow(dateTime, temp, rain, wind);
         }
