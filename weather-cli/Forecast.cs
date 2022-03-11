@@ -32,7 +32,7 @@ public class Forecast
         [property: JsonPropertyName("pressure")] int Pressure,
         [property: JsonPropertyName("humidity")] int Humidity,
         [property: JsonPropertyName("dew_point")] double DewPoint,
-        [property: JsonPropertyName("uvi")] int Uvi,
+        [property: JsonPropertyName("uvi")] double Uvi,
         [property: JsonPropertyName("clouds")] int Clouds,
         [property: JsonPropertyName("visibility")] int Visibility,
         [property: JsonPropertyName("wind_speed")] double WindSpeed,
