@@ -11,7 +11,6 @@ internal static class Program
 {
     private static HttpClient _client { get; set; } = new();
     private const string _keyFile = "openweathermap.apikey";
-    private static string _apiKey { get; set; }
     private const string _units = "metric";
 
     static async Task Main(string[] args)
@@ -23,18 +22,41 @@ internal static class Program
         }
 
         AnsiConsole.WriteLine($"Reading API key from \"{_keyFile}\"");
-        _apiKey = File.ReadAllText(_keyFile);
+        var apiKey = File.ReadAllText(_keyFile);
         AnsiConsole.WriteLine("API key retrieved");
 
         const string lat = "35.1815";
         const string lon = "136.9066";
 
-        var result = await _client.GetStringAsync($"https://api.openweathermap.org/data/2.5/onecall?lat={lat}&lon={lon}&units={_units}&appid={_apiKey}");
+        var result = await _client.GetStringAsync(
+            $"https://api.openweathermap.org/data/2.5/onecall?lat={lat}&lon={lon}&units={_units}&appid={apiKey}");
         AnsiConsole.WriteLine("Response received.");
 
         var forecast = JsonSerializer.Deserialize<Forecast.Root>(result);
+
+        if (forecast is null)
+        {
+            AnsiConsole.WriteLine("No data was received. Aborting.");
+            return;
+        }
+
+        var table = new Table();
+        table.AddColumn("Date");
+        table.AddColumn("Temp");
+        table.AddColumn("Rain");
+        table.AddColumn("Wind");
+
         AnsiConsole.WriteLine($"The current temperature is {forecast.Current.Temp} degrees, but it feels like {forecast.Current.FeelsLike} degrees.");
-        var time = DateTimeOffset.FromUnixTimeMilliseconds(forecast.Current.Dt);
-        AnsiConsole.WriteLine($"The time is {time.LocalDateTime}");
+        foreach (var d in forecast.Daily)
+        {
+            var dateTime = d.Dt.ToString();
+            var temp = d.Temp.Min.ToString("0") + "-" + d.Temp.Max.ToString("0");
+            var rain = d.Rain?.ToString("0") ?? "--";
+            var wind = $"{d.WindSpeed} ({d.WindGust})";
+
+            table.AddRow(dateTime, temp, rain, wind);
+        }
+
+        AnsiConsole.Write(table);
     }
 }
