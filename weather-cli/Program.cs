@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -27,9 +28,10 @@ internal static class Program
 
         const string lat = "35.1815";
         const string lon = "136.9066";
+        const string lang = "en";
 
         var result = await _client.GetStringAsync(
-            $"https://api.openweathermap.org/data/2.5/onecall?lat={lat}&lon={lon}&units={_units}&appid={apiKey}");
+            $"https://api.openweathermap.org/data/2.5/onecall?lat={lat}&lon={lon}&units={_units}&lang={lang}&appid={apiKey}");
         if (string.IsNullOrWhiteSpace(result))
         {
             AnsiConsole.WriteLine("No data was received. Aborting.");
@@ -47,24 +49,34 @@ internal static class Program
             return;
         }
 
+        AnsiConsole.WriteLine($"Weather for {forecast.Lat}, {forecast.Lon}");
+        AnsiConsole.WriteLine($"Current temperature is {forecast.Current.Temp} degrees, but feels like {forecast.Current.FeelsLike} degrees.");
+        AnsiConsole.WriteLine($"Humidity is {forecast.Current.Humidity}%");
+
+        if (forecast.Alerts is not null)
+        {
+            foreach (var alert in forecast.Alerts)
+                AnsiConsole.WriteLine($"ALERT: {alert}");
+        }
+
         var table = new Table();
         table.AddColumn("Date");
         table.AddColumn("Temp");
+        table.AddColumn("Humidity");
         table.AddColumn("Rain");
         table.AddColumn("Wind");
-        table.AddColumn("🌅");
+        table.AddColumn("Sun");
 
-        AnsiConsole.WriteLine($"Weather for {forecast.Lat}, {forecast.Lon}");
-        AnsiConsole.WriteLine($"Current temperature is {forecast.Current.Temp} degrees, but feels like {forecast.Current.FeelsLike} degrees.");
         foreach (var d in forecast.Daily)
         {
-            var dateTime = DateTime.UnixEpoch.AddSeconds(d.Dt).ToString("ddd MMM d");
-            var temp = d.Temp.Min.ToString("0") + " to " + d.Temp.Max.ToString("0");
+            var dateTime = DateTime.UnixEpoch.AddSeconds(d.Dt).ToLocalTime().ToString("ddd MMM d");
+            var temp = d.Temp.Min.ToString("0") + " / " + d.Temp.Max.ToString("0");
+            var humidity = d.Humidity + "%";
             var rain = d.Rain is null ? "--" : d.Rain.Value.ToString("0") + "%";
             var wind = $"{d.WindSpeed:0} (up to {d.WindGust:0})";
             var sunrise = $"{DateTime.UnixEpoch.AddSeconds(d.Sunrise).ToLocalTime():HH:mm} / {DateTime.UnixEpoch.AddSeconds(d.Sunset).ToLocalTime():HH:mm}";
 
-            table.AddRow(dateTime, temp, rain, wind, sunrise);
+            table.AddRow(dateTime, temp, humidity, rain, wind, sunrise);
         }
 
         AnsiConsole.Write(table);
