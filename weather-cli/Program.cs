@@ -49,7 +49,7 @@ internal static class Program
         AnsiConsole.WriteLine($"The current temperature is {forecast.Current.Temp} degrees, but it feels like {forecast.Current.FeelsLike} degrees.");
         foreach (var d in forecast.Daily)
         {
-            var dateTime = d.Dt.ToString();
+            var dateTime = DateTime.UnixEpoch.AddSeconds(d.Dt).ToShortDateString();
             var temp = d.Temp.Min.ToString("0") + "-" + d.Temp.Max.ToString("0");
             var rain = d.Rain?.ToString("0") ?? "--";
             var wind = $"{d.WindSpeed} ({d.WindGust})";
