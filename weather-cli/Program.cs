@@ -30,13 +30,20 @@ internal static class Program
 
         var result = await _client.GetStringAsync(
             $"https://api.openweathermap.org/data/2.5/onecall?lat={lat}&lon={lon}&units={_units}&appid={apiKey}");
+        if (string.IsNullOrWhiteSpace(result))
+        {
+            AnsiConsole.WriteLine("No data was received. Aborting.");
+            return;
+        }
+
         AnsiConsole.WriteLine("Response received.");
+        //File.WriteAllText("test.json", result);
 
         var forecast = JsonSerializer.Deserialize<Forecast.Root>(result);
 
         if (forecast is null)
         {
-            AnsiConsole.WriteLine("No data was received. Aborting.");
+            AnsiConsole.WriteLine("Error parsing data. Aborting.");
             return;
         }
 
@@ -45,6 +52,7 @@ internal static class Program
         table.AddColumn("Temp");
         table.AddColumn("Rain");
         table.AddColumn("Wind");
+        table.AddColumn("🌅");
 
         AnsiConsole.WriteLine($"Weather for {forecast.Lat}, {forecast.Lon}");
         AnsiConsole.WriteLine($"Current temperature is {forecast.Current.Temp} degrees, but feels like {forecast.Current.FeelsLike} degrees.");
@@ -54,8 +62,9 @@ internal static class Program
             var temp = d.Temp.Min.ToString("0") + " to " + d.Temp.Max.ToString("0");
             var rain = d.Rain is null ? "--" : d.Rain.Value.ToString("0") + "%";
             var wind = $"{d.WindSpeed:0} (up to {d.WindGust:0})";
+            var sunrise = $"{DateTime.UnixEpoch.AddSeconds(d.Sunrise).ToLocalTime():HH:mm} / {DateTime.UnixEpoch.AddSeconds(d.Sunset).ToLocalTime():HH:mm}";
 
-            table.AddRow(dateTime, temp, rain, wind);
+            table.AddRow(dateTime, temp, rain, wind, sunrise);
         }
 
         AnsiConsole.Write(table);
