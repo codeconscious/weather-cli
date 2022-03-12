@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Spectre.Console;
 
@@ -25,6 +26,7 @@ internal static class Program
         var forecast = GetForecast();
 
         PrintCurrent(forecast);
+        PrintHourly(forecast);
         PrintDailyForecast(forecast);
     }
 
@@ -117,5 +119,42 @@ internal static class Program
         }
 
         AnsiConsole.Write(table);
+    }
+
+    private static void PrintHourly(Forecast.Root forecast)
+    {
+        ArgumentNullException.ThrowIfNull(forecast);
+
+        var table = new Table();
+        table.AddColumn("Date");
+        table.AddColumn("Temp");
+        table.AddColumn("Humidity");
+        table.AddColumn("Rain");
+        table.AddColumn("Wind");
+        table.AddColumn("Summary");
+
+        foreach (var h in forecast.Hourly.Where(ShouldProcessHourly))
+        {
+            var dateTime = DateTime.UnixEpoch.AddSeconds(h.Dt).ToLocalTime().ToString("MMM d | HH");
+            var temp = h.Temp.ToString("0");
+            var humidity = h.Humidity + "%";
+            var rain = h.Pop.ToString("0") + "%";
+            var wind = $"{h.WindSpeed:0} (up to {h.WindGust:0})";
+            var desc = string.Join(Environment.NewLine, h.Weather.Select(w => w.Main + ": " + w.Description));
+
+            table.AddRow(dateTime, temp, humidity, rain, wind, desc);
+        }
+
+        AnsiConsole.Write(table);
+
+        static bool ShouldProcessHourly(Forecast.Hourly hourly)
+        {
+            var earliest = DateTime.Now;
+            var last = earliest.Date.AddDays(1).Add(new TimeSpan(23, 0, 0));
+
+            var dtLocalTime = DateTime.UnixEpoch.AddSeconds(hourly.Dt).ToLocalTime();
+
+            return earliest < dtLocalTime && last > dtLocalTime;
+        }
     }
 }
