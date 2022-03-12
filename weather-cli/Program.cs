@@ -108,7 +108,7 @@ internal static class Program
 
         foreach (var d in forecast.Daily)
         {
-            var dateTime = DateTime.UnixEpoch.AddSeconds(d.Dt).ToLocalTime().ToString("ddd MMM d");
+            var dateTime = ConvertIntToLocalDateTime(d.Dt).ToString("ddd MMM d");
             var temp = d.Temp.Min.ToString("0") + " / " + d.Temp.Max.ToString("0");
             var humidity = d.Humidity + "%";
             var rain = d.Rain is null ? "--" : d.Rain.Value.ToString("0") + "%";
@@ -135,12 +135,12 @@ internal static class Program
 
         foreach (var h in forecast.Hourly.Where(ShouldProcessHourly))
         {
-            var dateTime = DateTime.UnixEpoch.AddSeconds(h.Dt).ToLocalTime().ToString("MMM d | HH");
+            var dateTime = ConvertIntToLocalDateTime(h.Dt).ToString("MMM d | HH");
             var temp = h.Temp.ToString("0");
             var humidity = h.Humidity + "%";
             var rain = h.Pop.ToString("0") + "%";
             var wind = $"{h.WindSpeed:0} (up to {h.WindGust:0})";
-            var desc = string.Join(Environment.NewLine, h.Weather.Select(w => w.Main + ": " + w.Description));
+            var desc = string.Join(Environment.NewLine, h.Weather.Select(w => w.Description));
 
             table.AddRow(dateTime, temp, humidity, rain, wind, desc);
         }
@@ -154,7 +154,10 @@ internal static class Program
 
             var dtLocalTime = DateTime.UnixEpoch.AddSeconds(hourly.Dt).ToLocalTime();
 
-            return earliest < dtLocalTime && last > dtLocalTime;
+            return earliest <= dtLocalTime && last >= dtLocalTime;
         }
     }
+
+    private static DateTime ConvertIntToLocalDateTime(int dtInt) =>
+        DateTime.UnixEpoch.AddSeconds(dtInt).ToLocalTime();
 }
