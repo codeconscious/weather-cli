@@ -30,24 +30,38 @@ internal static class Program
         const string lon = "136.9066";
         const string lang = "en";
 
-        var result = await _client.GetStringAsync(
-            $"https://api.openweathermap.org/data/2.5/onecall?lat={lat}&lon={lon}&units={_units}&lang={lang}&appid={apiKey}");
-        if (string.IsNullOrWhiteSpace(result))
-        {
-            AnsiConsole.WriteLine("No data was received. Aborting.");
-            return;
-        }
+        Forecast.Root? forecast =
+        AnsiConsole.Status()
+            .Spinner(Spinner.Known.Star)
+            .SpinnerStyle(Style.Parse("green bold"))
+            .Start<Forecast.Root>("Getting weather data...", ctx =>
+            {
+                var result = _client.GetStringAsync(
+                    "https://api.openweathermap.org/data/2.5/onecall?" +
+                    $"lat={lat}&lon={lon}&units={_units}&lang={lang}&appid={apiKey}").Result;
 
-        AnsiConsole.WriteLine("Response received.");
+                if (string.IsNullOrWhiteSpace(result))
+                {
+                    AnsiConsole.WriteLine("No data was received. Aborting.");
+                    return null;
+                }
+
+                ctx.Status("Response received");
+
+                forecast = JsonSerializer.Deserialize<Forecast.Root>(result);
+                ctx.Status("Data parsed OK");
+
+                if (forecast is null)
+                {
+                    AnsiConsole.WriteLine("Error parsing data. Aborting.");
+                    return null;
+                }
+                return forecast;
+            });
+
         //File.WriteAllText("test.json", result);
 
-        var forecast = JsonSerializer.Deserialize<Forecast.Root>(result);
 
-        if (forecast is null)
-        {
-            AnsiConsole.WriteLine("Error parsing data. Aborting.");
-            return;
-        }
 
         AnsiConsole.WriteLine($"Weather for {forecast.Lat}, {forecast.Lon}");
         AnsiConsole.WriteLine($"Current temperature is {forecast.Current.Temp} degrees, but feels like {forecast.Current.FeelsLike} degrees.");
