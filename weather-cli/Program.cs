@@ -22,20 +22,20 @@ internal static class Program
             return;
         }
 
-        AnsiConsole.WriteLine($"Reading API key from \"{_keyFile}\"");
-        var apiKey = File.ReadAllText(_keyFile);
-        AnsiConsole.WriteLine("API key retrieved");
-
-        const string lat = "35.1815";
-        const string lon = "136.9066";
-        const string lang = "en";
-
-        Forecast.Root? forecast =
-        AnsiConsole.Status()
-            .Spinner(Spinner.Known.Star)
+        var forecast = AnsiConsole
+            .Status()
+            .Spinner(Spinner.Known.Arc)
             .SpinnerStyle(Style.Parse("green bold"))
             .Start<Forecast.Root>("Getting weather data...", ctx =>
             {
+                ctx.Status($"Reading API key from \"{_keyFile}\"...");
+                var apiKey = File.ReadAllText(_keyFile);
+                AnsiConsole.WriteLine($"API key retrieved from \"{_keyFile}\"");
+
+                ctx.Status("Contacting the weather service...");
+                const string lat = "35.1815";
+                const string lon = "136.9066";
+                const string lang = "en";
                 var result = _client.GetStringAsync(
                     "https://api.openweathermap.org/data/2.5/onecall?" +
                     $"lat={lat}&lon={lon}&units={_units}&lang={lang}&appid={apiKey}").Result;
@@ -46,24 +46,16 @@ internal static class Program
                     return null;
                 }
 
-                ctx.Status("Response received");
+                AnsiConsole.WriteLine("Response received");
 
-                forecast = JsonSerializer.Deserialize<Forecast.Root>(result);
-                ctx.Status("Data parsed OK");
+                ctx.Status("Parsing the data...");
+                var parsedForecast = JsonSerializer.Deserialize<Forecast.Root>(result);
+                AnsiConsole.WriteLine("Data parsed OK");
 
-                if (forecast is null)
-                {
-                    AnsiConsole.WriteLine("Error parsing data. Aborting.");
-                    return null;
-                }
-                return forecast;
+                return parsedForecast;
             });
 
-        //File.WriteAllText("test.json", result);
-
-
-
-        AnsiConsole.WriteLine($"Weather for {forecast.Lat}, {forecast.Lon}");
+        AnsiConsole.WriteLine($"Weather for {forecast.Lat} @ {forecast.Lon}");
         AnsiConsole.WriteLine($"Current temperature is {forecast.Current.Temp} degrees, but feels like {forecast.Current.FeelsLike} degrees.");
         AnsiConsole.WriteLine($"Humidity is {forecast.Current.Humidity}%");
 
