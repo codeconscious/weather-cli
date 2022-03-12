@@ -22,7 +22,15 @@ internal static class Program
             return;
         }
 
-        var forecast = AnsiConsole
+        var forecast = GetForecast();
+
+        PrintCurrent(forecast);
+        PrintDailyForecast(forecast);
+    }
+
+    private static Forecast.Root GetForecast()
+    {
+        return AnsiConsole
             .Status()
             .Spinner(Spinner.Known.Arc)
             .SpinnerStyle(Style.Parse("green bold"))
@@ -54,16 +62,39 @@ internal static class Program
 
                 return parsedForecast;
             });
+    }
 
-        AnsiConsole.WriteLine($"Weather for {forecast.Lat} @ {forecast.Lon}");
-        AnsiConsole.WriteLine($"Current temperature is {forecast.Current.Temp} degrees, but feels like {forecast.Current.FeelsLike} degrees.");
-        AnsiConsole.WriteLine($"Humidity is {forecast.Current.Humidity}%");
+    private static void PrintCurrent(Forecast.Root forecast)
+    {
+        ArgumentNullException.ThrowIfNull(forecast);
 
-        if (forecast.Alerts is not null)
+        var table = new Table
+        {
+            Border = TableBorder.None
+        };
+        table.AddColumn("Info");
+        table.HideHeaders();
+        table.AddRow($"Weather for {forecast.Lat} @ {forecast.Lon}");
+        table.AddRow($"Temperature is {forecast.Current.Temp} degrees, feeling like {forecast.Current.FeelsLike}");
+        table.AddRow($"Humidity is {forecast.Current.Humidity}%");
+
+        if (forecast.Alerts?.Any() == true)
         {
             foreach (var alert in forecast.Alerts)
-                AnsiConsole.WriteLine($"ALERT: {alert}");
+                table.AddRow($"ALERT: {alert}");
         }
+
+        var panel = new Panel(table)
+        {
+            Border = BoxBorder.Rounded,
+            Header = new PanelHeader("Current conditions", Justify.Left)
+        };
+        AnsiConsole.Write(panel);
+    }
+
+    private static void PrintDailyForecast(Forecast.Root forecast)
+    {
+        ArgumentNullException.ThrowIfNull(forecast);
 
         var table = new Table();
         table.AddColumn("Date");
