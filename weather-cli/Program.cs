@@ -135,10 +135,10 @@ internal static class Program
 
         foreach (var h in forecast.Hourly.Where(ShouldProcessHourly))
         {
-            var dateTime = ConvertIntToLocalDateTime(h.Dt).ToString("MMM d | HH");
+            var dateTime = ConvertIntToLocalDateTime(h.Dt).ToString("MMM d @ HH");
             var temp = h.Temp.ToString("0");
             var humidity = h.Humidity + "%";
-            var rain = h.Pop.ToString("0") + "%";
+            var rain = (h.Pop * 100).ToString("0.##") + "%";
             var wind = $"{h.WindSpeed:0} (up to {h.WindGust:0})";
             var desc = string.Join(Environment.NewLine, h.Weather.Select(w => w.Description));
 
