@@ -112,7 +112,11 @@ internal static class Program
             var dateTime = ConvertIntToLocalDateTime(d.Dt).ToString("ddd MMM d") + fullMoon;
             var temp = d.Temp.Min.ToString("0") + " [gray]/[/] " + d.Temp.Max.ToString("0");
             var humidity = d.Humidity + "%";
-            var rain = d.Rain is null ? "--" : d.Rain.Value.ToString("0") + "%";
+
+            var rainPct = (d.Pop * 100).ToString("0") + "%";
+            var rainMm = d.Rain is null ? "--" : d.Rain.Value.ToString("0") + "mm";
+            var rain = $"{rainMm} @ {rainPct}";
+
             var wind = $"{d.WindSpeed:0} (up to {d.WindGust:0})";
 
             var sunrise = ConvertIntToLocalDateTime(d.Sunrise);
