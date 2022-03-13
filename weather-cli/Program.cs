@@ -110,13 +110,17 @@ internal static class Program
         {
             var fullMoon = d.MoonPhase == 0.5 ? " 🌕" : string.Empty;
             var dateTime = ConvertIntToLocalDateTime(d.Dt).ToString("ddd MMM d") + fullMoon;
-            var temp = d.Temp.Min.ToString("0") + " / " + d.Temp.Max.ToString("0");
+            var temp = d.Temp.Min.ToString("0") + " [gray]/[/] " + d.Temp.Max.ToString("0");
             var humidity = d.Humidity + "%";
             var rain = d.Rain is null ? "--" : d.Rain.Value.ToString("0") + "%";
             var wind = $"{d.WindSpeed:0} (up to {d.WindGust:0})";
-            var sunrise = $"{DateTime.UnixEpoch.AddSeconds(d.Sunrise).ToLocalTime():HH:mm} / {DateTime.UnixEpoch.AddSeconds(d.Sunset).ToLocalTime():HH:mm}";
 
-            table.AddRow(dateTime, temp, humidity, rain, wind, sunrise);
+            var sunrise = ConvertIntToLocalDateTime(d.Sunrise);
+            var sunset = ConvertIntToLocalDateTime(d.Sunset);
+            var sunHours = $"{sunrise:HH:mm} – {sunset:HH:mm}" +
+                           $" ({(sunset - sunrise).ToString(@"h\:mm")})";
+
+            table.AddRow(dateTime, temp, humidity, rain, wind, sunHours);
         }
 
         AnsiConsole.Write(table);
@@ -146,7 +150,7 @@ internal static class Program
             var temp = h.Temp.ToString("0");
             var humidity = h.Humidity + "%";
             var rain = (h.Pop * 100).ToString("0") + "%";
-            var wind = $"{h.WindSpeed:0} / {h.WindGust:0}";
+            var wind = $"{h.WindSpeed:0} [gray]/[/] {h.WindGust:0}";
             var desc = string.Join(Environment.NewLine, h.Weather.Select(w => w.Description));
             var cloudPct = h.Clouds.ToString() + "%";
             var visibility = (h.Visibility / 1000).ToString("0") + "km";
