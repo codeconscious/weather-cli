@@ -101,14 +101,15 @@ internal static class Program
         var table = new Table();
         table.AddColumn("Date");
         table.AddColumn("Temp");
-        table.AddColumn("Humidity");
-        table.AddColumn("Rain");
+        table.AddColumn("Humid", t => t.Alignment = Justify.Right);
+        table.AddColumn("Rain", t => t.Alignment = Justify.Right);
         table.AddColumn("Wind");
         table.AddColumn("Sun");
 
         foreach (var d in forecast.Daily)
         {
-            var dateTime = ConvertIntToLocalDateTime(d.Dt).ToString("ddd MMM d");
+            var fullMoon = d.MoonPhase == 0.5 ? " 🌕" : string.Empty;
+            var dateTime = ConvertIntToLocalDateTime(d.Dt).ToString("ddd MMM d") + fullMoon;
             var temp = d.Temp.Min.ToString("0") + " / " + d.Temp.Max.ToString("0");
             var humidity = d.Humidity + "%";
             var rain = d.Rain is null ? "--" : d.Rain.Value.ToString("0") + "%";
@@ -126,23 +127,32 @@ internal static class Program
         ArgumentNullException.ThrowIfNull(forecast);
 
         var table = new Table();
-        table.AddColumn("Date");
-        table.AddColumn("Temp");
-        table.AddColumn("Humidity");
-        table.AddColumn("Rain");
+        table.AddColumn("Date", t => t.Alignment = Justify.Right);
+        table.AddColumn("Temp", t => t.Alignment = Justify.Right);
+        table.AddColumn("Humid", t => t.Alignment = Justify.Right);
+        table.AddColumn("Rain", t => t.Alignment = Justify.Right);
         table.AddColumn("Wind");
         table.AddColumn("Summary");
+        table.AddColumn("Cloud", t => t.Alignment = Justify.Right);
+        table.AddColumn("Vis.", t => t.Alignment = Justify.Right);
+        table.AddColumn("UV");
 
         foreach (var h in forecast.Hourly.Where(ShouldProcessHourly))
         {
-            var dateTime = ConvertIntToLocalDateTime(h.Dt).ToString("MMM d @ HH");
+            var dt = ConvertIntToLocalDateTime(h.Dt);
+            var formattedDt = dt.Hour == 0
+                ? dt.ToString("MMM d @ HH")
+                : dt.ToString("HH");
             var temp = h.Temp.ToString("0");
             var humidity = h.Humidity + "%";
-            var rain = (h.Pop * 100).ToString("0.##") + "%";
-            var wind = $"{h.WindSpeed:0} (up to {h.WindGust:0})";
+            var rain = (h.Pop * 100).ToString("0") + "%";
+            var wind = $"{h.WindSpeed:0} / {h.WindGust:0}";
             var desc = string.Join(Environment.NewLine, h.Weather.Select(w => w.Description));
+            var cloudPct = h.Clouds.ToString() + "%";
+            var visibility = (h.Visibility / 1000).ToString("0") + "km";
+            var uv = h.Uvi.ToString("0");
 
-            table.AddRow(dateTime, temp, humidity, rain, wind, desc);
+            table.AddRow(formattedDt, temp, humidity, rain, wind, desc, cloudPct, visibility, uv);
         }
 
         AnsiConsole.Write(table);
