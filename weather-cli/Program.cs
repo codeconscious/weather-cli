@@ -159,7 +159,7 @@ internal static class Program
 
         static bool ShouldProcessHourly(Forecast.Hourly hourly)
         {
-            var earliest = DateTime.Now;
+            var earliest = DateTime.Now.AddHours(-1);
             var last = earliest.Date.AddDays(1).Add(new TimeSpan(23, 0, 0));
 
             var dtLocalTime = DateTime.UnixEpoch.AddSeconds(hourly.Dt).ToLocalTime();
