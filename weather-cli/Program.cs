@@ -18,7 +18,7 @@ internal static class Program
     {
         if (!File.Exists(_keyFile))
         {
-            AnsiConsole.WriteLine($"Cannot find \"{_keyFile}\", so aborting.");
+            AnsiConsole.WriteLine($"Cannot find key file \"{_keyFile}\", so aborting.");
             return;
         }
 
@@ -31,7 +31,6 @@ internal static class Program
         }
 
         Forecast.Root forecast = maybeForecast;
-
         PrintCurrent(forecast);
         PrintHourly(forecast);
         PrintDailyForecast(forecast);

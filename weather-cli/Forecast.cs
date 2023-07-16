@@ -3,9 +3,9 @@ using System.Collections.Generic;
 
 namespace WeatherCLI;
 
-public class Forecast
+public sealed record class Forecast
 {
-    public record Root(
+    public sealed record class Root(
         [property: JsonPropertyName("lat")] double Lat,
         [property: JsonPropertyName("lon")] double Lon,
         [property: JsonPropertyName("timezone")] string Timezone,
@@ -17,14 +17,14 @@ public class Forecast
         [property: JsonPropertyName("alerts")] IReadOnlyList<Alert> Alerts
     );
 
-    public record Weather(
+    public sealed record class Weather(
         [property: JsonPropertyName("id")] int Id,
         [property: JsonPropertyName("main")] string Main,
         [property: JsonPropertyName("description")] string Description,
         [property: JsonPropertyName("icon")] string Icon
     );
 
-    public record Current(
+    public sealed record class Current(
         [property: JsonPropertyName("dt")] int Dt,
         [property: JsonPropertyName("sunrise")] int Sunrise,
         [property: JsonPropertyName("sunset")] int Sunset,
@@ -42,12 +42,12 @@ public class Forecast
         [property: JsonPropertyName("weather")] IReadOnlyList<Weather> Weather
     );
 
-    public record Minutely(
+    public sealed record class Minutely(
         [property: JsonPropertyName("dt")] int Dt,
         [property: JsonPropertyName("precipitation")] double Precipitation
     );
 
-    public record Hourly(
+    public sealed record class Hourly(
         [property: JsonPropertyName("dt")] int Dt,
         [property: JsonPropertyName("temp")] double Temp,
         [property: JsonPropertyName("feels_like")] double FeelsLike,
@@ -67,7 +67,7 @@ public class Forecast
         [property: JsonPropertyName("pop")] double Pop
     );
 
-    public record Temp(
+    public sealed record class Temp(
         [property: JsonPropertyName("day")] double Day,
         [property: JsonPropertyName("min")] double Min,
         [property: JsonPropertyName("max")] double Max,
@@ -76,14 +76,14 @@ public class Forecast
         [property: JsonPropertyName("morn")] double Morn
     );
 
-    public record FeelsLike(
+    public sealed record class FeelsLike(
         [property: JsonPropertyName("day")] double Day,
         [property: JsonPropertyName("night")] double Night,
         [property: JsonPropertyName("eve")] double Eve,
         [property: JsonPropertyName("morn")] double Morn
     );
 
-    public record Daily(
+    public sealed record class Daily(
         [property: JsonPropertyName("dt")] int Dt,
         [property: JsonPropertyName("sunrise")] int Sunrise,
         [property: JsonPropertyName("sunset")] int Sunset,
@@ -105,7 +105,7 @@ public class Forecast
         [property: JsonPropertyName("rain")] double? Rain
     );
 
-    public record Alert(
+    public sealed record class Alert(
         [property: JsonPropertyName("sender_name")] string SenderName,
         [property: JsonPropertyName("event")] string Event,
         [property: JsonPropertyName("start")] int Start,
