@@ -16,13 +16,30 @@ internal static class Program
 
     static async Task Main(string[] args)
     {
-        if (!File.Exists(_keyFile))
+        if (args is null || args.Length != 2)
         {
-            AnsiConsole.WriteLine($"Cannot find key file \"{_keyFile}\", so aborting.");
+            AnsiConsole.WriteLine("You must pass a latitude and longitude, in that order.");
             return;
         }
 
-        var maybeForecast = await GetForecast();
+        Options options;
+        try
+        {
+            options = new Options(args[0], args[1]);
+        }
+        catch (ArgumentException ex)
+        {
+            AnsiConsole.MarkupLine($"[red]Argument error:[/] {ex.Message}");
+            return;
+        }
+
+        if (!File.Exists(_keyFile))
+        {
+            AnsiConsole.MarkupLine($"[red]Error:[/] Cannot find key file \"{_keyFile}\", so aborting.");
+            return;
+        }
+
+        var maybeForecast = await GetForecast(options);
 
         if (maybeForecast is null)
         {
@@ -40,7 +57,7 @@ internal static class Program
     /// Gets and parses JSON data from the weather API.
     /// </summary>
     /// <returns>A Forecast.Root object or else null if the connection failed.</returns>
-    private static async Task<Forecast.Root?> GetForecast()
+    private static async Task<Forecast.Root?> GetForecast(Options options)
     {
         return await AnsiConsole
             .Status()
@@ -54,12 +71,10 @@ internal static class Program
                 AnsiConsole.WriteLine($"API key read from \"{_keyFile}\".");
 
                 ctx.Status("Contacting the weather service...");
-                const string lat = "35.1815";
-                const string lon = "136.9066";
-                const string lang = "en";
                 var result = await Client.GetStringAsync(
                     "https://api.openweathermap.org/data/2.5/onecall?" +
-                    $"lat={lat}&lon={lon}&units={_units}&lang={lang}&appid={apiKey}");
+                    $"lat={options.Latitude}&lon={options.Longitude}&" +
+                    $"units={_units}&lang={options.Language}&appid={apiKey}");
                 if (string.IsNullOrWhiteSpace(result)) return null;
                 AnsiConsole.WriteLine("Response received.");
 
