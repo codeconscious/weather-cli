@@ -3,7 +3,6 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using Spectre.Console;
 
@@ -11,7 +10,7 @@ namespace WeatherCLI;
 
 internal static class Program
 {
-    private static HttpClient _client { get; set; } = new();
+    private static HttpClient Client { get; set; } = new();
     private const string _keyFile = "openweathermap.apikey";
     private const string _units = "metric";
 
@@ -38,6 +37,10 @@ internal static class Program
         PrintDailyForecast(forecast);
     }
 
+    /// <summary>
+    /// Gets and parses JSON data from the weather API.
+    /// </summary>
+    /// <returns>A Forecast.Root object or else null if the connection failed.</returns>
     private static async Task<Forecast.Root?> GetForecast()
     {
         return await AnsiConsole
@@ -48,26 +51,23 @@ internal static class Program
             {
                 ctx.Status($"Reading API key from \"{_keyFile}\"...");
                 var apiKey = File.ReadAllText(_keyFile);
-                AnsiConsole.WriteLine($"API key retrieved from \"{_keyFile}\"");
+                if (string.IsNullOrWhiteSpace(apiKey)) return null;
+                AnsiConsole.WriteLine($"API key read from \"{_keyFile}\".");
 
                 ctx.Status("Contacting the weather service...");
                 const string lat = "35.1815";
                 const string lon = "136.9066";
                 const string lang = "en";
-                var result = await _client.GetStringAsync(
+                var result = await Client.GetStringAsync(
                     "https://api.openweathermap.org/data/2.5/onecall?" +
                     $"lat={lat}&lon={lon}&units={_units}&lang={lang}&appid={apiKey}");
-
-                if (string.IsNullOrWhiteSpace(result))
-                {
-                    return null;
-                }
-
-                AnsiConsole.WriteLine("Response received");
+                if (string.IsNullOrWhiteSpace(result)) return null;
+                AnsiConsole.WriteLine("Response received.");
 
                 ctx.Status("Parsing the data...");
                 var parsedForecast = JsonSerializer.Deserialize<Forecast.Root>(result);
-                AnsiConsole.WriteLine("Data parsed OK");
+                if (parsedForecast is null) return null;
+                AnsiConsole.WriteLine("Data parsed OK.");
 
                 return parsedForecast;
             });
@@ -77,7 +77,7 @@ internal static class Program
     {
         ArgumentNullException.ThrowIfNull(forecast);
 
-        var table = new Table
+        Table table = new()
         {
             Border = TableBorder.None
         };
@@ -105,7 +105,10 @@ internal static class Program
     {
         ArgumentNullException.ThrowIfNull(forecast);
 
-        var table = new Table();
+        Table table = new()
+        {
+            Border = TableBorder.Rounded
+        };
         table.AddColumn("Date");
         table.AddColumn("Temp");
         table.AddColumn("Humid", t => t.Alignment = Justify.Right);
@@ -129,7 +132,7 @@ internal static class Program
             var sunrise = ConvertIntToLocalDateTime(d.Sunrise);
             var sunset = ConvertIntToLocalDateTime(d.Sunset);
             var sunHours = $"{sunrise:HH:mm} – {sunset:HH:mm}" +
-                           $" ({(sunset - sunrise).ToString(@"h\:mm")})";
+                           $" ({sunset - sunrise:h\\:mm})";
 
             table.AddRow(dateTime, temp, humidity, rain, wind, sunHours);
         }
@@ -141,7 +144,10 @@ internal static class Program
     {
         ArgumentNullException.ThrowIfNull(forecast);
 
-        var table = new Table();
+        Table table = new()
+        {
+            Border = TableBorder.Rounded
+        };
         table.AddColumn("Date", t => t.Alignment = Justify.Right);
         table.AddColumn("Temp", t => t.Alignment = Justify.Right);
         table.AddColumn("Humid", t => t.Alignment = Justify.Right);
@@ -172,14 +178,18 @@ internal static class Program
 
         AnsiConsole.Write(table);
 
+        /// <summary>
+        /// Indicates whether an hourly forecast should be processed or skipped.
+        /// It should be skipped if not within a timeframe appropriate for display.
+        /// </summary>
+        /// <param name="hourly"></param>
         static bool ShouldProcessHourly(Forecast.Hourly hourly)
         {
-            var earliest = DateTime.Now.AddHours(-1);
-            var last = earliest.Date.AddDays(1).Add(new TimeSpan(23, 0, 0));
-
+            var oneHourAgo = DateTime.Now.AddHours(-1);
+            var eodTomorrow = oneHourAgo.Date.AddDays(1).Add(new TimeSpan(23, 0, 0));
             var dtLocalTime = DateTime.UnixEpoch.AddSeconds(hourly.Dt).ToLocalTime();
-
-            return earliest <= dtLocalTime && last >= dtLocalTime;
+            return oneHourAgo <= dtLocalTime &&
+                   eodTomorrow >= dtLocalTime;
         }
     }
 
