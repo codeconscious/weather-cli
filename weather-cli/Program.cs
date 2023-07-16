@@ -23,20 +23,28 @@ internal static class Program
             return;
         }
 
-        var forecast = GetForecast();
+        var maybeForecast = await GetForecast();
+
+        if (maybeForecast is null)
+        {
+            AnsiConsole.WriteLine("No data was received via the API. Aborting.");
+            return;
+        }
+
+        Forecast.Root forecast = maybeForecast;
 
         PrintCurrent(forecast);
         PrintHourly(forecast);
         PrintDailyForecast(forecast);
     }
 
-    private static Forecast.Root GetForecast()
+    private static async Task<Forecast.Root?> GetForecast()
     {
-        return AnsiConsole
+        return await AnsiConsole
             .Status()
             .Spinner(Spinner.Known.Arc)
             .SpinnerStyle(Style.Parse("green bold"))
-            .Start<Forecast.Root>("Getting weather data...", ctx =>
+            .StartAsync<Forecast.Root?>("Getting weather data...", async ctx =>
             {
                 ctx.Status($"Reading API key from \"{_keyFile}\"...");
                 var apiKey = File.ReadAllText(_keyFile);
@@ -46,13 +54,12 @@ internal static class Program
                 const string lat = "35.1815";
                 const string lon = "136.9066";
                 const string lang = "en";
-                var result = _client.GetStringAsync(
+                var result = await _client.GetStringAsync(
                     "https://api.openweathermap.org/data/2.5/onecall?" +
-                    $"lat={lat}&lon={lon}&units={_units}&lang={lang}&appid={apiKey}").Result;
+                    $"lat={lat}&lon={lon}&units={_units}&lang={lang}&appid={apiKey}");
 
                 if (string.IsNullOrWhiteSpace(result))
                 {
-                    AnsiConsole.WriteLine("No data was received. Aborting.");
                     return null;
                 }
 
