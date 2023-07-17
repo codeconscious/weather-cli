@@ -18,12 +18,6 @@ internal static class Program
 
     static async Task Main(string[] args)
     {
-        if (args is null || args.Length != 2)
-        {
-            AnsiConsole.WriteLine(_instructions);
-            return;
-        }
-
         ApiKey apiKey;
         try
         {
@@ -44,7 +38,7 @@ internal static class Program
         Options options;
         try
         {
-            options = new Options(args[0], args[1]);
+            options = new Options(args);
         }
         catch (ArgumentException ex)
         {
@@ -57,7 +51,7 @@ internal static class Program
 
         if (maybeForecast is null)
         {
-            AnsiConsole.WriteLine("No data was received via the API. Aborting.");
+            AnsiConsole.MarkupLine("[red]No data was received via the API.[/]");
             return;
         }
 
