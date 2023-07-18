@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Spectre.Console;
+using ApiKey = System.String;
 
 namespace WeatherCLI;
 
@@ -13,20 +14,44 @@ internal static class Program
     private static HttpClient Client { get; set; } = new();
     private const string _keyFile = "openweathermap.apikey";
     private const string _units = "metric";
+    private const string _instructions = "You must pass a valid latitude and longitude, in that order.";
 
     static async Task Main(string[] args)
     {
-        if (!File.Exists(_keyFile))
+        ApiKey apiKey;
+        try
         {
-            AnsiConsole.WriteLine($"Cannot find key file \"{_keyFile}\", so aborting.");
+            if (!File.Exists(_keyFile))
+            {
+                AnsiConsole.MarkupLine($"[red]Error: Cannot find key file \"{_keyFile}\", so cannot continue.[/]");
+                return;
+            }
+
+            apiKey = File.ReadAllText(_keyFile).Trim();
+        }
+        catch (Exception ex)
+        {
+            AnsiConsole.MarkupLine($"[red]Key file error: {ex.Message}[/]");
+            throw;
+        }
+
+        Options options;
+        try
+        {
+            options = new Options(args);
+        }
+        catch (ArgumentException ex)
+        {
+            AnsiConsole.MarkupLine($"[red]Argument error: {ex.Message}[/]");
+            AnsiConsole.WriteLine(_instructions);
             return;
         }
 
-        var maybeForecast = await GetForecast();
+        var maybeForecast = await GetForecast(apiKey, options);
 
         if (maybeForecast is null)
         {
-            AnsiConsole.WriteLine("No data was received via the API. Aborting.");
+            AnsiConsole.MarkupLine("[red]No data was received via the API.[/]");
             return;
         }
 
@@ -40,7 +65,7 @@ internal static class Program
     /// Gets and parses JSON data from the weather API.
     /// </summary>
     /// <returns>A Forecast.Root object or else null if the connection failed.</returns>
-    private static async Task<Forecast.Root?> GetForecast()
+    private static async Task<Forecast.Root?> GetForecast(ApiKey apiKey, Options options)
     {
         return await AnsiConsole
             .Status()
@@ -49,17 +74,14 @@ internal static class Program
             .StartAsync<Forecast.Root?>("Getting weather data...", async ctx =>
             {
                 ctx.Status($"Reading API key from \"{_keyFile}\"...");
-                var apiKey = File.ReadAllText(_keyFile);
                 if (string.IsNullOrWhiteSpace(apiKey)) return null;
                 AnsiConsole.WriteLine($"API key read from \"{_keyFile}\".");
 
                 ctx.Status("Contacting the weather service...");
-                const string lat = "35.1815";
-                const string lon = "136.9066";
-                const string lang = "en";
                 var result = await Client.GetStringAsync(
                     "https://api.openweathermap.org/data/2.5/onecall?" +
-                    $"lat={lat}&lon={lon}&units={_units}&lang={lang}&appid={apiKey}");
+                    $"lat={options.Latitude}&lon={options.Longitude}&" +
+                    $"units={_units}&lang={options.Language}&appid={apiKey}");
                 if (string.IsNullOrWhiteSpace(result)) return null;
                 AnsiConsole.WriteLine("Response received.");
 
